@@ -1,251 +1,236 @@
 // =========================
-// DM SYSTEM — Optimized (Full Functionality Preserved)
+// DM SYSTEM — Ultra-Optimized, All Features Preserved
 // =========================
-
-(function () {
-  const localDb =
+(() => {
+  const db =
     window.db ||
     window.dmdb ||
     new FirebaseAPI("https://parthsocialhack-default-rtdb.firebaseio.com/");
 
-  let currentConversation = null;
-  let _loadingConversation = false;
+  let currentConvo = null,
+    loading = false;
 
-  const escapeHtml = (t) =>
+  const esc = (t) =>
     t
-      ? t
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;")
+      ? t.replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[
+            c
+          ])
+        )
       : "";
 
-  const messagesToArray = (n) =>
-    !n
-      ? []
-      : Array.isArray(n)
-      ? n.filter(Boolean)
-      : Object.values(n).filter(Boolean);
+  const toArray = (n) =>
+    !n ? [] : Array.isArray(n) ? n.filter(Boolean) : Object.values(n).filter(Boolean);
 
-  const generateConversationId = (a, b) =>
-    [a, b].sort().join("_");
+  const convoId = (a, b) => (a < b ? `${a}_${b}` : `${b}_${a}`);
 
-  function checkAuth() {
-    if (!localStorage.getItem("authToken") || !localStorage.getItem("username"))
+  const unreadDot = (u, show) => {
+    const el = document.querySelector(
+      `.conversation-item[data-id="${CSS.escape(u)}"] .unread-dot`
+    );
+    if (el) el.style.display = show ? "inline-block" : "none";
+  };
+
+  const authCheck = () => {
+    if (!localStorage.authToken || !localStorage.username)
       location.href = "index.html";
-  }
+  };
 
   // =========================
-  // LOAD RECENT CONVERSATIONS (Optimized)
+  // LOAD RECENT CONVERSATIONS
   // =========================
-  async function loadRecentConversations() {
+  async function loadRecents() {
     try {
-      const user = localStorage.getItem("username");
-      const [users, dms] = await Promise.all([
-        localDb.get("/users"),
-        localDb.get("/dms"),
-      ]);
-
+      const user = localStorage.username;
       const container = document.getElementById("conversationList");
-      if (!container || !dms) return;
+      if (!container) return;
+
+      const [users, dms] = await Promise.all([
+        db.get("/users"),
+        db.get("/dms"),
+      ]);
+      if (!dms) return;
+
       container.innerHTML = "";
+      const rows = [];
 
-      const conversations = [];
+      for (const id in dms) {
+        if (!id.includes(user)) continue;
 
-      for (const convoId in dms) {
-        if (!convoId.includes(user)) continue;
-        const convoNode = dms[convoId];
-        if (!convoNode) continue;
+        const node = dms[id];
+        if (!node) continue;
 
-        const msgs = messagesToArray(convoNode.messages || convoNode);
+        const msgs = toArray(node.messages || node);
         if (!msgs.length) continue;
 
-        // last message
-        let lastMsg = msgs[0];
-        for (let i = 1; i < msgs.length; i++) {
-          if (
-            new Date(msgs[i].createdAt) >
-            new Date(lastMsg.createdAt)
-          )
-            lastMsg = msgs[i];
-        }
+        // get last message FASTEST possible
+        let last = msgs[0];
+        for (let i = 1; i < msgs.length; i++)
+          if (msgs[i].createdAt > last.createdAt) last = msgs[i];
 
-        const [u1, u2] = convoId.split("_");
-        const otherUser = u1 === user ? u2 : u1;
+        const [a, b] = id.split("_");
+        const other = a === user ? b : a;
 
-        conversations.push({
-          otherUser,
-          lastMsg,
-          unread: lastMsg.sender !== user,
+        rows.push({
+          other,
+          last,
+          unread: last.sender !== user,
         });
       }
 
-      conversations.sort(
-        (a, b) =>
-          new Date(b.lastMsg.createdAt) -
-          new Date(a.lastMsg.createdAt)
+      rows.sort(
+        (a, b) => (b.last.createdAt > a.last.createdAt ? 1 : -1)
       );
 
-      for (const convo of conversations) {
+      for (const r of rows) {
         const el = document.createElement("div");
         el.className = "conversation-item";
+        el.dataset.id = r.other;
+
         el.innerHTML = `
-          <span class="conversation-name">${escapeHtml(
-            convo.otherUser
-          )}</span>
-          ${convo.unread ? `<span class="unread-dot"></span>` : ""}
+          <span class="conversation-name">
+            ${esc(r.other)}
+            <span class="unread-dot" style="display:${
+              r.unread ? "inline-block" : "none"
+            }"></span>
+          </span>
         `;
-        el.onclick = () => loadConversation(convo.otherUser);
+
+        el.onclick = () => loadConvo(r.other);
         container.appendChild(el);
       }
     } catch (err) {
-      console.error("loadRecentConversations error:", err);
+      console.error("loadRecents error:", err);
     }
   }
 
   // =========================
-  // LOAD USERS (optimized)
+  // LOAD USERS
   // =========================
   async function loadUsers() {
     try {
-      const users = await localDb.get("/users");
-      const currentUser = localStorage.getItem("username");
-      const select = document.getElementById("userSelect");
-      if (!select || !users) return;
+      const users = await db.get("/users");
+      const me = localStorage.username;
+      const s = document.getElementById("userSelect");
 
-      select.innerHTML = `<option value="">Select user…</option>`;
+      if (!users || !s) return;
+
+      s.innerHTML = `<option value="">Select a user…</option>`;
       for (const u in users) {
-        if (u === currentUser) continue;
-        const o = document.createElement("option");
-        o.value = o.textContent = u;
-        select.appendChild(o);
+        if (u === me) continue;
+        s.innerHTML += `<option value="${esc(u)}">${esc(u)}</option>`;
       }
 
-      select.onchange = (e) =>
-        e.target.value && loadConversation(e.target.value);
-    } catch (err) {
-      console.error("loadUsers error:", err);
+      s.onchange = (e) => e.target.value && loadConvo(e.target.value);
+    } catch (e) {
+      console.error("loadUsers error:", e);
     }
   }
 
   // =========================
-  // LOAD CONVERSATION (optimized, same behavior)
+  // LOAD CONVERSATION
   // =========================
-  async function loadConversation(otherUser) {
-    if (_loadingConversation && currentConversation === otherUser) return;
-    _loadingConversation = true;
+  async function loadConvo(other) {
+    if (loading && currentConvo === other) return;
+    loading = true;
 
     try {
-      const currentUser = localStorage.getItem("username");
-      currentConversation = otherUser;
-      const convoId = generateConversationId(currentUser, otherUser);
+      const me = localStorage.username;
+      currentConvo = other;
 
-      const header = document.getElementById("threadHeader");
-      if (header)
-        header.innerHTML = `<h2>Chat with ${escapeHtml(otherUser)}</h2>`;
+      unreadDot(other, false);
 
-      let messages = await localDb.get(`/dms/${convoId}/messages`);
-      if (!messages) {
-        const node = await localDb.get(`/dms/${convoId}`);
-        messages = node?.messages || null;
-      }
+      const id = convoId(me, other);
 
-      const container = document.getElementById("messages");
-      if (!container) return;
-      container.innerHTML = "";
+      const head = document.getElementById("threadHeader");
+      if (head) head.innerHTML = `<h2>Chat with ${esc(other)}</h2>`;
 
-      if (messages) {
-        let arr = messagesToArray(messages);
+      let msgs = await db.get(`/dms/${id}/messages`);
+      if (!msgs) msgs = (await db.get(`/dms/${id}`))?.messages;
 
-        // fastest ascending sort
-        arr.sort(
-          (a, b) =>
-            new Date(a.createdAt) - new Date(b.createdAt)
+      const box = document.getElementById("messages");
+      if (!box) return;
+
+      box.innerHTML = "";
+
+      if (msgs) {
+        const arr = toArray(msgs).sort(
+          (a, b) => (a.createdAt > b.createdAt ? 1 : -1)
         );
 
-        for (const msg of arr) {
-          const d = document.createElement("div");
-          d.className =
-            "message " +
-            (msg.sender === currentUser ? "sent" : "received");
-          const time = msg.createdAt
-            ? new Date(msg.createdAt).toLocaleTimeString()
-            : "";
-          d.innerHTML = `
-            ${escapeHtml(msg.text)}
-            <div class="message-time">${time}</div>
-          `;
-          container.appendChild(d);
+        let html = "";
+        for (const m of arr) {
+          html += `
+            <div class="message ${m.sender === me ? "sent" : "received"}">
+              ${esc(m.text)}
+              <div class="message-time">${
+                m.createdAt
+                  ? new Date(m.createdAt).toLocaleTimeString()
+                  : ""
+              }</div>
+            </div>`;
         }
+        box.innerHTML = html;
       } else {
-        container.innerHTML = `<div class="empty-thread">No messages yet — say hi!</div>`;
+        box.innerHTML = `<div class="empty-thread">No messages yet — say hi!</div>`;
       }
 
-      container.scrollTop = container.scrollHeight;
-      loadRecentConversations();
-    } catch (err) {
-      console.error("loadConversation error:", err);
+      box.scrollTop = box.scrollHeight;
+      loadRecents();
+    } catch (e) {
+      console.error("loadConvo error:", e);
     } finally {
-      _loadingConversation = false;
+      loading = false;
     }
   }
 
   // =========================
-  // SEND MESSAGE (optimized)
+  // SEND MESSAGE
   // =========================
-  function initSendHandler() {
-    const sendBtn = document.getElementById("sendBtn");
-    if (!sendBtn) return;
+  function initSend() {
+    const btn = document.getElementById("sendBtn");
+    if (!btn) return;
 
-    sendBtn.onclick = null;
+    btn.onclick = async () => {
+      if (!currentConvo) return alert("Select a user first");
 
-    sendBtn.addEventListener("click", async () => {
-      if (!currentConversation) return alert("Select a user first");
-
-      const textEl = document.getElementById("messageText");
-      const text = textEl?.value.trim();
-      if (!text) return;
+      const input = document.getElementById("messageText");
+      const txt = input.value.trim();
+      if (!txt) return;
 
       try {
-        const user = localStorage.getItem("username");
-        const convoId = generateConversationId(user, currentConversation);
-        const msg = {
-          sender: user,
-          text,
+        const me = localStorage.username;
+        const id = convoId(me, currentConvo);
+
+        await db.push(`/dms/${id}/messages`, {
+          sender: me,
+          text: txt,
           createdAt: new Date().toISOString(),
-        };
+        });
 
-        await localDb.push(`/dms/${convoId}/messages`, msg);
-
-        textEl.value = "";
-        loadConversation(currentConversation);
+        input.value = "";
+        loadConvo(currentConvo);
       } catch (err) {
-        console.error("send error:", err);
+        console.error("send msg error:", err);
       }
-    });
+    };
   }
 
   // =========================
-  // AUTO-REFRESH (optimized polling)
+  // AUTO REFRESH (still 3 sec)
   // =========================
   setInterval(() => {
-    try {
-      loadRecentConversations();
-      if (currentConversation && !_loadingConversation)
-        loadConversation(currentConversation);
-    } catch (e) {
-      console.debug("poll error:", e);
-    }
+    loadRecents();
+    if (currentConvo && !loading) loadConvo(currentConvo);
   }, 3000);
 
   // =========================
   // INIT
   // =========================
   document.addEventListener("DOMContentLoaded", () => {
-    checkAuth();
-    loadRecentConversations();
+    authCheck();
+    loadRecents();
     loadUsers();
-    initSendHandler();
+    initSend();
   });
 })();
