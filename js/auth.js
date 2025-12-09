@@ -1,128 +1,79 @@
-// ========================================================
-// auth.js — OPTIMIZED VERSION (PLAIN PASSWORDS, NO HASHING)
-// ========================================================
+// ===============================
+// ELEMENTS
+// ===============================
+const loginForm = document.getElementById("loginForm"),
+      signupForm = document.getElementById("signupForm"),
+      loginBtn = document.getElementById("loginBtn"),
+      signupBtn = document.getElementById("signupBtn");
 
-const loginForm = document.getElementById("loginForm");
-const signupForm = document.getElementById("signupForm");
-const loginBtn = document.getElementById("loginBtn");
-const signupBtn = document.getElementById("signupBtn");
+// ===============================
+// UI SWITCH
+// ===============================
+const toggle = (isLogin) => {
+  loginForm.classList.toggle("active", isLogin);
+  signupForm.classList.toggle("active", !isLogin);
+  loginBtn.classList.toggle("active", isLogin);
+  signupBtn.classList.toggle("active", !isLogin);
+};
 
-// ========================================================
-// SECTION: UI SWITCHING
-// ========================================================
-function showLogin() {
-  loginForm.classList.add("active");
-  signupForm.classList.remove("active");
-  loginBtn.classList.add("active");
-  signupBtn.classList.remove("active");
+loginBtn.onclick = () => toggle(true);
+signupBtn.onclick = () => toggle(false);
+
+// ===============================
+// AUTH HELPERS
+// ===============================
+async function startSession(username) {
+  const token = db.generateId();
+  await db.set(`/sessions/${token}`, { username, createdAt: new Date().toISOString() });
+  localStorage.setItem("authToken", token);
+  localStorage.setItem("username", username);
+  window.location.href = "feed.html";
 }
 
-function showSignup() {
-  signupForm.classList.add("active");
-  loginForm.classList.remove("active");
-  signupBtn.classList.add("active");
-  loginBtn.classList.remove("active");
-}
-
-loginBtn.addEventListener("click", showLogin);
-signupBtn.addEventListener("click", showSignup);
-
-// ========================================================
-// SECTION: LOGIN — direct password comparison
-// ========================================================
-loginForm.addEventListener("submit", async (e) => {
+// ===============================
+// LOGIN
+// ===============================
+loginForm.onsubmit = async (e) => {
   e.preventDefault();
+  const u = loginUsername.value.trim(),
+        p = loginPassword.value,
+        err = loginError;
 
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value;
-  const errorDiv = document.getElementById("loginError");
+  err.textContent = "";
+  if (!u || !p) return err.textContent = "All fields required.";
 
-  errorDiv.textContent = "";
+  const user = await db.get(`/users/${u}`);
+  if (!user || user.passwordHash !== p) return err.textContent = "Invalid username or password";
 
-  if (!username || !password) {
-    errorDiv.textContent = "All fields required.";
-    return;
-  }
+  startSession(u);
+};
 
-  try {
-    const userData = await db.get(`/users/${username}`);
-
-    if (!userData || userData.passwordHash !== password) {
-      errorDiv.textContent = "Invalid username or password";
-      return;
-    }
-
-    // create session token
-    const token = db.generateId();
-    await db.set(`/sessions/${token}`, {
-      username,
-      createdAt: new Date().toISOString(),
-    });
-
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("username", username);
-
-    window.location.href = "feed.html";
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    errorDiv.textContent = "Login failed. Try again.";
-  }
-});
-
-// ========================================================
-// SECTION: SIGNUP — store plain password
-// ========================================================
-signupForm.addEventListener("submit", async (e) => {
+// ===============================
+// SIGNUP
+// ===============================
+signupForm.onsubmit = async (e) => {
   e.preventDefault();
+  const u = signupUsername.value.trim(),
+        p = signupPassword.value,
+        err = signupError;
 
-  const username = document.getElementById("signupUsername").value.trim();
-  const password = document.getElementById("signupPassword").value;
-  const errorDiv = document.getElementById("signupError");
+  err.textContent = "";
+  if (!u || !p) return err.textContent = "All fields required.";
 
-  errorDiv.textContent = "";
+  if (await db.get(`/users/${u}`)) return err.textContent = "Username already taken";
 
-  if (!username || !password) {
-    errorDiv.textContent = "All fields required.";
-    return;
-  }
+  await db.set(`/users/${u}`, {
+    username: u,
+    passwordHash: p,
+    bio: "",
+    avatar: "",
+    createdAt: new Date().toISOString()
+  });
 
-  try {
-    const exists = await db.get(`/users/${username}`);
+  startSession(u);
+};
 
-    if (exists) {
-      errorDiv.textContent = "Username already taken";
-      return;
-    }
-
-    await db.set(`/users/${username}`, {
-      username,
-      passwordHash: password, // still plain text, as requested
-      bio: "",
-      avatar: "",
-      createdAt: new Date().toISOString(),
-    });
-
-    const token = db.generateId();
-    await db.set(`/sessions/${token}`, {
-      username,
-      createdAt: new Date().toISOString(),
-    });
-
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("username", username);
-
-    window.location.href = "feed.html";
-  } catch (err) {
-    console.error("SIGNUP ERROR:", err);
-    errorDiv.textContent = "Signup failed.";
-  }
-});
-
-// ========================================================
-// AUTO-REDIRECT IF ALREADY LOGGED IN
-// ========================================================
-(function autoRedirect() {
-  if (localStorage.getItem("authToken")) {
-    window.location.href = "feed.html";
-  }
-})();
+// ===============================
+// AUTO-REDIRECT
+// ===============================
+if (localStorage.getItem("authToken")) window.location.href = "feed.html";
