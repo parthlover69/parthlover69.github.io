@@ -1,123 +1,162 @@
-// ==========================================
-// REAL Firebase DB + Auth Check
-// ==========================================
-const profiledb = new FirebaseAPI("https://parthsocial-2f4bb-default-rtdb.firebaseio.com/")
+// ========================================================
+// profile.js — ULTRA OPTIMIZED VERSION WITH AVATAR COMPRESSION
+// ========================================================
+
+const profiledb = new FirebaseAPI(
+  "https://parthsocialhack-default-rtdb.firebaseio.com/"
+);
 
 function checkAuth() {
-  const token = localStorage.getItem("authToken")
-  const username = localStorage.getItem("username")
-  if (!token || !username) window.location.href = "index.html"
+  const token = localStorage.getItem("authToken");
+  const username = localStorage.getItem("username");
+  if (!token || !username) window.location.href = "index.html";
 }
 
-// ==========================================
-// Get username to display:
-// If ?user=username exists → view OTHER profile
-// Otherwise → load your own
-// ==========================================
+/* =======================================================
+   Determine which profile to load (yours or ?user=someone)
+========================================================= */
 function getProfileUser() {
-  const params = new URLSearchParams(window.location.search)
-  return params.get("user") || localStorage.getItem("username")
+  const params = new URLSearchParams(window.location.search);
+  return params.get("user") || localStorage.getItem("username");
 }
 
-// ==========================================
-// Load Profile
-// ==========================================
+/* =======================================================
+   Load Profile
+========================================================= */
 async function loadProfile() {
-  const viewingUser = getProfileUser()
-  const currentUser = localStorage.getItem("username")
+  const viewingUser = getProfileUser();
+  const currentUser = localStorage.getItem("username");
 
-  let user = await profiledb.get(`/users/${viewingUser}`)
+  let user = await profiledb.get(`/users/${viewingUser}`);
 
-  // If user does not exist, create basic placeholder
   if (!user) {
-    user = { bio: "", avatar: "", createdAt: new Date().toISOString() }
-    await profiledb.set(`/users/${viewingUser}`, user)
+    user = { bio: "", avatar: "", createdAt: new Date().toISOString() };
+    await profiledb.set(`/users/${viewingUser}`, user);
   }
 
-  // Fill UI
-  document.getElementById("username").textContent = viewingUser
-  document.getElementById("bio").value = user.bio || ""
+  document.getElementById("username").textContent = viewingUser;
+  document.getElementById("bio").value = user.bio || "";
 
   if (user.avatar) {
-    document.getElementById("avatar").innerHTML =
-      `<img src="data:image/jpeg;base64,${user.avatar}" alt="avatar">`
+    document.getElementById("avatar").innerHTML = `
+      <img src="data:image/jpeg;base64,${user.avatar}" alt="avatar">
+    `;
   }
 
-  // ==============================
-  // Hide editing tools if viewing someone else
-  // ==============================
-  const isOwnProfile = viewingUser === currentUser
+  const isOwn = currentUser === viewingUser;
 
-  document.getElementById("bio").disabled = !isOwnProfile
-  document.getElementById("saveBioBtn").style.display = isOwnProfile ? "block" : "none"
-  document.getElementById("uploadAvatarBtn").style.display = isOwnProfile ? "block" : "none"
-  document.getElementById("avatarFile").style.display = isOwnProfile ? "block" : "none"
+  document.getElementById("bio").disabled = !isOwn;
+  document.getElementById("saveBioBtn").style.display = isOwn ? "block" : "none";
+  document.getElementById("uploadAvatarBtn").style.display = isOwn ? "block" : "none";
+  document.getElementById("avatarFile").style.display = isOwn ? "block" : "none";
 }
 
-// ==========================================
-// Upload New Avatar
-// ==========================================
+/* =======================================================
+   IMAGE COMPRESSION UTILITIES — THE MAGIC SAUCE
+========================================================= */
+
+// Resize + compress image using <canvas>
+function compressImage(file, maxSize = 128, quality = 0.6) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+
+    img.onload = () => {
+      // Create canvas
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+
+      let w = img.width;
+      let h = img.height;
+
+      // Scale down
+      if (w > h) {
+        if (w > maxSize) {
+          h *= maxSize / w;
+          w = maxSize;
+        }
+      } else {
+        if (h > maxSize) {
+          w *= maxSize / h;
+          h = maxSize;
+        }
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Output compressed JPEG
+      const data = canvas.toDataURL("image/jpeg", quality);
+      const base64 = data.split(",")[1];
+
+      resolve(base64);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/* =======================================================
+   Upload Avatar (SUPER COMPRESSED)
+========================================================= */
 document.getElementById("uploadAvatarBtn").addEventListener("click", () => {
-  document.getElementById("avatarFile").click()
-})
+  document.getElementById("avatarFile").click();
+});
 
 document.getElementById("avatarFile").addEventListener("change", async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const reader = new FileReader()
-  reader.onload = async (event) => {
-    const base64 = event.target.result.split(",")[1]
-    const currentUser = localStorage.getItem("username")
+  // Compress heavily
+  const base64 = await compressImage(file, 128, 0.6);
+  const currentUser = localStorage.getItem("username");
 
-    let user = await profiledb.get(`/users/${currentUser}`)
-    if (!user) user = {}
+  // Update user avatar in DB
+  await profiledb.set(`/users/${currentUser}/avatar`, base64);
 
-    user.avatar = base64
-    await profiledb.set(`/users/${currentUser}`, user)
+  // Update UI instantly
+  document.getElementById("avatar").innerHTML = `
+    <img src="data:image/jpeg;base64,${base64}" alt="avatar">
+  `;
 
-    document.getElementById("avatar").innerHTML =
-      `<img src="data:image/jpeg;base64,${base64}" alt="avatar">`
+  // Admin log
+  await profiledb.push("/adminLogs", {
+    action: "avatar_updated",
+    user: currentUser,
+    timestamp: new Date().toISOString(),
+  });
+});
 
-    await profiledb.push("/adminLogs", {
-      action: "avatar_updated",
-      user: currentUser,
-      timestamp: new Date().toISOString(),
-    })
-  }
-
-  reader.readAsDataURL(file)
-})
-
-// ==========================================
-// Save Bio
-// ==========================================
+/* =======================================================
+   Save Bio
+========================================================= */
 document.getElementById("saveBioBtn").addEventListener("click", async () => {
-  const currentUser = localStorage.getItem("username")
-  const bio = document.getElementById("bio").value
+  const currentUser = localStorage.getItem("username");
+  const bio = document.getElementById("bio").value.trim();
 
-  let user = await profiledb.get(`/users/${currentUser}`)
-  if (!user) user = {}
+  await profiledb.set(`/users/${currentUser}/bio`, bio);
 
-  user.bio = bio
-  await profiledb.set(`/users/${currentUser}`, user)
-
-  const msg = document.getElementById("profileMessage")
-  msg.textContent = "Bio updated!"
-
-  setTimeout(() => (msg.textContent = ""), 2000)
+  const msg = document.getElementById("profileMessage");
+  msg.textContent = "Bio updated!";
+  setTimeout(() => (msg.textContent = ""), 1500);
 
   await profiledb.push("/adminLogs", {
     action: "bio_updated",
     user: currentUser,
     timestamp: new Date().toISOString(),
-  })
-})
+  });
+});
 
-// ==========================================
-// Init
-// ==========================================
+/* =======================================================
+   Init
+========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  checkAuth()
-  loadProfile()
-})
+  checkAuth();
+  loadProfile();
+});
