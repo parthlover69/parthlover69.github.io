@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function () {
+    const isMac = navigator.userAgent.includes("Mac OS X");
+    const hasBypass = window.location.search.includes("bypass");
+
+    if (isMac && !hasBypass) {
+
+        // Stop loading immediately
+        if (window.stop) window.stop();
+
+        // Block all future network requests
+        window.fetch = () => new Promise(() => {});
+        XMLHttpRequest.prototype.open = function() { throw new Error(); };
+
+        // Try to silently close the tab
+        setTimeout(() => {
+            // Trick: open blank page in same tab, then close it
+            window.location.href = "about:blank";
+            setTimeout(() => {
+                window.close();
+            }, 50);
+        }, 10);
+
+        // Kill the rest of the execution
+        throw new Error();
+    }
+})();
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>parth.social - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-box">
+            <h1>parth.social</h1>
+            <p class="subtitle">parth's tuff social network</p>
+            
+            <div id="authForm">
+                <div class="form-toggle">
+                    <button id="loginBtn" class="toggle-btn active">Login</button>
+                    <button id="signupBtn" class="toggle-btn">Sign Up</button>
+                </div>
+
+                <form id="loginForm" class="form active">
+                    <div class="form-group">
+                        <input type="text" id="loginUsername" placeholder="username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="loginPassword" placeholder="password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                    <div id="loginError" class="error-message"></div>
+                </form>
+
+                <form id="signupForm" class="form">
+                    <div class="form-group">
+                        <input type="text" id="signupUsername" placeholder="username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signupPassword" placeholder="password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Sign Up</button>
+                    <div id="signupError" class="error-message"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sha256.js"></script>
+    <script src="js/firebase-api.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

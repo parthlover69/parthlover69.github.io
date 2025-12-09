@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Panel - parth.social</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <button class="sidebar-toggle">☰</button>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a href="feed.html">Feed</a>
+        <a href="admin.html" class="active">Admin</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div class="admin-container hidden" id="adminContainer">
+        <h1>Admin Panel <span class="admin-badge">ADMIN</span></h1>
+
+        <div class="admin-stats">
+          <div class="stat-card">
+            <h3>Total Users</h3>
+            <p id="totalUsers">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Total Posts</h3>
+            <p id="totalPosts">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Total Groups</h3>
+            <p id="totalGroups">0</p>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;">
+          <div style="flex:1">
+            <input id="adminSearch" placeholder="Search users / posts / groups..." style="width:100%;padding:8px;background:#0b0b0b;border:1px solid #222;color:#fff;">
+          </div>
+          <button id="refreshBtn" class="btn-secondary">Refresh</button>
+        </div>
+
+        <div class="admin-sections" style="display:grid;grid-template-columns: 280px 1fr; gap:20px;">
+          <!-- Left nav -->
+          <div class="admin-nav" style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn-secondary admin-tab active" data-tab="feedTab">Feed Moderation</button>
+            <button class="btn-secondary admin-tab" data-tab="usersTab">Users</button>
+            <button class="btn-secondary admin-tab" data-tab="dmsTab">DMs</button>
+            <button class="btn-secondary admin-tab" data-tab="groupsTab">Groups</button>
+            <button class="btn-secondary admin-tab" data-tab="profilesTab">Profiles</button>
+            <button class="btn-secondary admin-tab" data-tab="logsTab">Activity Logs</button>
+            <button id="signOutAdmin" class="btn-danger" style="margin-top:8px;">Sign out</button>
+          </div>
+
+          <!-- Right content -->
+          <div class="admin-main">
+            <!-- FEED -->
+            <div id="feedTab" class="admin-tab-content">
+              <h2>Feed Moderation</h2>
+              <div id="postsList" style="display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto"></div>
+            </div>
+
+            <!-- USERS -->
+            <div id="usersTab" class="admin-tab-content hidden">
+              <h2>Users</h2>
+              <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <button id="reloadUsers" class="btn-secondary">Reload Users</button>
+                <button id="exportUsers" class="btn-secondary">Export (JSON)</button>
+              </div>
+              <div id="usersList" style="max-height:60vh;overflow:auto"></div>
+            </div>
+
+            <!-- DMS -->
+            <div id="dmsTab" class="admin-tab-content hidden">
+              <h2>Direct Messages</h2>
+              <div style="display:flex;gap:12px;">
+                <div style="flex:0 0 260px;">
+                  <div class="dm-sidebar">
+                    <h2>Conversations</h2>
+                    <div id="dmConversations" class="conversation-list"></div>
+                  </div>
+                </div>
+                <div style="flex:1;">
+                  <div id="dmThread" class="dm-thread hidden">
+                    <div class="thread-header" id="dmThreadHeader"></div>
+                    <div class="messages-container" id="dmMessages"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GROUPS -->
+            <div id="groupsTab" class="admin-tab-content hidden">
+              <h2>Groups</h2>
+              <div style="display:flex;gap:12px;">
+                <div style="flex:0 0 260px;">
+                  <div class="groups-list" id="adminGroupsList"></div>
+                </div>
+                <div style="flex:1;">
+                  <div id="groupChat" class="group-chat hidden">
+                    <div class="thread-header" id="groupHeader"></div>
+                    <div class="messages-container" id="groupMessages"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PROFILES -->
+            <div id="profilesTab" class="admin-tab-content hidden">
+              <h2>Profile Management</h2>
+              <div id="profileEditor" style="max-height:60vh;overflow:auto"></div>
+            </div>
+
+            <!-- LOGS -->
+            <div id="logsTab" class="admin-tab-content hidden">
+              <h2>Activity Logs</h2>
+              <button id="clearLogsBtn" class="btn-secondary">Clear Logs</button>
+              <div id="logsList" class="logs-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Password / Setup Modal -->
+  <div id="pwModal" class="modal" aria-hidden="false">
+    <div class="modal-content">
+      <button id="pwClose" class="modal-close">✖</button>
+      <h2 class="modal-title" id="pwTitle">Admin Login</h2>
+
+      <div id="pwBody">
+        <p id="pwInstructions" style="color:#ffbd82;margin-bottom:8px;">Please enter the admin password to access the panel.</p>
+        <input id="adminPasswordInput" type="password" placeholder="Admin password">
+        <div style="height:10px"></div>
+        <button id="pwSubmit" class="btn-primary">Submit</button>
+        <div id="pwError" class="error-message" style="min-height:18px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Post Modal -->
+  <div id="editPostModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <button id="editPostClose" class="modal-close">✖</button>
+      <h2 class="modal-title">Edit Post</h2>
+      <div id="editPostBody"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="savePostBtn" class="btn-primary">Save</button>
+        <button id="deletePostBtn" class="btn-danger">Delete Post</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sha256.js"></script>
+  <script src="js/firebase-api.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

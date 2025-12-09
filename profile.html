@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - parth.social</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <button class="sidebar-toggle">☰</button>
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
+        </aside>
+        
+        <main class="content">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div id="avatar" class="avatar"></div>
+                    <div class="profile-info">
+                        <h1 id="username"></h1>
+                        <textarea id="bio" placeholder="your bio" maxlength="200"></textarea>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button id="uploadAvatarBtn" class="btn-secondary">📸 Upload Avatar</button>
+                    <input type="file" id="avatarFile" accept="image/*" class="hidden">
+                    <button id="saveBioBtn" class="btn-primary">Save Bio</button>
+                </div>
+
+                <div id="profileMessage" class="info-message"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sha256.js"></script>
+    <script src="js/firebase-api.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>

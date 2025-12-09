@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Feed - parth.social</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <button class="sidebar-toggle">☰</button>
+        <nav class="sidebar-nav" id="sidebarNav">
+          <a href="feed.html" class="active">Feed</a>
+          <a href="dm.html">Messages</a>
+          <a href="groups.html">Groups</a>
+          <a href="profile.html">Profile</a>
+          <a href="#" onclick="logout()">Logout</a>
+        </nav>
+      </aside>
+    <main class="content">
+      <div class="feed-container">
+        <!-- COMPOSE -->
+        <div class="compose-box">
+          <textarea id="postText" placeholder="what's on your mind?" maxlength="1000"></textarea>
+          <div class="compose-actions">
+            <button id="postBtn" class="btn-primary">Post</button>
+          </div>
+        </div>
+        <!-- POSTS -->
+        <div id="feedPosts" class="posts-container"></div>
+      </div>
+    </main>
+  </div>
+  <!-- Edit/Delete Modal -->
+  <div id="postModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <button id="modalClose" class="modal-close">✖</button>
+      <h2 class="modal-title">Edit Post</h2>
+      <div class="modal-author" id="modalAuthor"></div>
+      <textarea id="modalText" class="modal-text" maxlength="1000"></textarea>
+      <div class="modal-actions">
+        <button id="modalSave" class="btn-primary">Save</button>
+        <button id="modalDelete" class="btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+  <!-- 3-dot menu template (rendered per post) -->
+  <template id="menuTemplate">
+    <div class="post-menu">
+      <button class="menu-item edit">Edit</button>
+      <button class="menu-item delete">Delete</button>
+    </div>
+  </template>
+  <script src="js/firebase-api.js"></script>
+  <script src="js/feed.js"></script>
+</body>
+</html>

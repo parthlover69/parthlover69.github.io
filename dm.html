@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Messages - parth.social</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <button class="sidebar-toggle">☰</button>
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
+        </aside>
+        
+        <main class="content">
+            <div class="dm-container">
+                <div class="dm-sidebar">
+                    <h2>Messages</h2>
+                    <select id="userSelect" class="user-select">
+                        <option value="">Select a user...</option>
+                    </select>
+                    <div id="conversationList" class="conversation-list"></div>
+                </div>
+
+                <div class="dm-thread">
+                    <div id="threadHeader" class="thread-header"></div>
+                    <div id="messages" class="messages-container"></div>
+                    <div class="message-input">
+                        <input type="text" id="messageText" placeholder="Type a message..." maxlength="500">
+                        <button id="sendBtn" class="btn-primary">Send</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/sha256.js"></script>
+    <script src="js/firebase-api.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/dm.js"></script>
+</body>
+</html>
