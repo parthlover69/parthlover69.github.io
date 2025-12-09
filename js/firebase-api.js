@@ -1,65 +1,61 @@
 class FirebaseAPI {
   constructor(databaseUrl) {
-    this.baseURL = databaseUrl
+    this.baseURL = databaseUrl.endsWith("/")
+      ? databaseUrl
+      : databaseUrl + "/";
+
+    this.jsonHeaders = { "Content-Type": "application/json" };
   }
 
-  async get(path) {
+  // Core request method (centralized for efficiency)
+  async request(path, options = {}) {
+    const url = `${this.baseURL}${path}.json`;
+
     try {
-      const response = await fetch(`${this.baseURL}${path}.json`)
-      if (!response.ok) throw new Error("Failed to fetch")
-      return await response.json()
-    } catch (error) {
-      console.error("Firebase GET error:", error)
-      return null
+      const res = await fetch(url, options);
+      if (!res.ok) return null; // avoid throwing, cheaper
+
+      // Fastest way to handle no-body responses (DELETE)
+      return res.status === 200 ? res.json() : true;
+    } catch {
+      return null;
     }
   }
 
-  async set(path, data) {
-    try {
-      const response = await fetch(`${this.baseURL}${path}.json`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error("Failed to set")
-      return await response.json()
-    } catch (error) {
-      console.error("Firebase SET error:", error)
-      return null
-    }
+  // CRUD wrappers
+  get(path) {
+    return this.request(path);
   }
 
-  async push(path, data) {
-    try {
-      const response = await fetch(`${this.baseURL}${path}.json`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error("Failed to push")
-      return await response.json()
-    } catch (error) {
-      console.error("Firebase PUSH error:", error)
-      return null
-    }
+  set(path, data) {
+    return this.request(path, {
+      method: "PUT",
+      headers: this.jsonHeaders,
+      body: JSON.stringify(data),
+    });
   }
 
-  async delete(path) {
-    try {
-      const response = await fetch(`${this.baseURL}${path}.json`, {
-        method: "DELETE",
-      })
-      if (!response.ok) throw new Error("Failed to delete")
-      return true
-    } catch (error) {
-      console.error("Firebase DELETE error:", error)
-      return false
-    }
+  push(path, data) {
+    return this.request(path, {
+      method: "POST",
+      headers: this.jsonHeaders,
+      body: JSON.stringify(data),
+    });
   }
 
+  delete(path) {
+    return this.request(path, { method: "DELETE" });
+  }
+
+  // Efficient ID generator
   generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2)
+    return (
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2)
+    );
   }
 }
 
-const db = new FirebaseAPI("https://parthsocial-2f4bb-default-rtdb.firebaseio.com/")
+const db = new FirebaseAPI(
+  "https://parthsocialhack-default-rtdb.firebaseio.com/"
+);
