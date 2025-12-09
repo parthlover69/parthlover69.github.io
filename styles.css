@@ -987,3 +987,12 @@ body {
   object-fit: cover;
   border-radius: 8px;
 }
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background: #3ea8ff;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 6px;
+}
+
