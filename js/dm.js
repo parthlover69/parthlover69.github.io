@@ -200,7 +200,7 @@ if (textEl) {
   // =========================
   // SEND MESSAGE
   // =========================
-  function initSendHandler() {
+  function initSend() {
     const sendBtn = document.getElementById("sendBtn");
     if (!sendBtn) return;
   
