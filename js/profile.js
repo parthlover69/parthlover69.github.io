@@ -56,82 +56,67 @@ async function loadProfile() {
 ========================================================= */
 
 // Resize + compress image using <canvas>
-function compressImage(file, maxSize = 128, quality = 0.6) {
+// ==========================================
+// SUPER LIGHTWEIGHT AVATAR COMPRESSION
+// ==========================================
+async function compressImageToWebP(file, maxSize = 64) {
   return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        // 1. Create canvas capped at small resolution
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
 
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
+        // Resize to square maxSize × maxSize
+        const size = maxSize
+        canvas.width = size
+        canvas.height = size
 
-    img.onload = () => {
-      // Create canvas
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d", { alpha: false });
+        // Draw image scaled
+        ctx.drawImage(img, 0, 0, size, size)
 
-      let w = img.width;
-      let h = img.height;
+        // 2. Export to WebP (super tiny)
+        const compressed = canvas.toDataURL("image/webp", 0.4) 
+        // 0.4 quality makes ~3–7 KB images
 
-      // Scale down
-      if (w > h) {
-        if (w > maxSize) {
-          h *= maxSize / w;
-          w = maxSize;
-        }
-      } else {
-        if (h > maxSize) {
-          w *= maxSize / h;
-          h = maxSize;
-        }
+        resolve(compressed.split(",")[1]) // return base64 only
       }
-
-      canvas.width = w;
-      canvas.height = h;
-
-      ctx.drawImage(img, 0, 0, w, h);
-
-      // Output compressed JPEG
-      const data = canvas.toDataURL("image/jpeg", quality);
-      const base64 = data.split(",")[1];
-
-      resolve(base64);
-    };
-
-    reader.readAsDataURL(file);
-  });
+      img.src = event.target.result
+    }
+    reader.readAsDataURL(file)
+  })
 }
+
 
 /* =======================================================
    Upload Avatar (SUPER COMPRESSED)
 ========================================================= */
-document.getElementById("uploadAvatarBtn").addEventListener("click", () => {
-  document.getElementById("avatarFile").click();
-});
-
 document.getElementById("avatarFile").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]
+  if (!file) return
 
-  // Compress heavily
-  const base64 = await compressImage(file, 128, 0.6);
-  const currentUser = localStorage.getItem("username");
+  // 🔥 compress to extremely small WebP
+  const compressedBase64 = await compressImageToWebP(file, 64)
 
-  // Update user avatar in DB
-  await profiledb.set(`/users/${currentUser}/avatar`, base64);
+  const currentUser = localStorage.getItem("username")
+  let user = await profiledb.get(`/users/${currentUser}`)
+  if (!user) user = {}
 
-  // Update UI instantly
-  document.getElementById("avatar").innerHTML = `
-    <img src="data:image/jpeg;base64,${base64}" alt="avatar">
-  `;
+  user.avatar = compressedBase64
+  await profiledb.set(`/users/${currentUser}`, user)
 
-  // Admin log
+  document.getElementById("avatar").innerHTML =
+    `<img src="data:image/webp;base64,${compressedBase64}" alt="avatar">`
+
   await profiledb.push("/adminLogs", {
     action: "avatar_updated",
     user: currentUser,
     timestamp: new Date().toISOString(),
-  });
-});
+  })
+})
+
 
 /* =======================================================
    Save Bio
