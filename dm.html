@@ -1,43 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Messages - parth.social</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Direct Messages — parth.social</title>
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+        /* PAGE LAYOUT */
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #0a0a0a;
+            border-right: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        /* Conversation List */
+        .conversation-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 15px 18px;
+            border-bottom: 1px solid #111;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .conversation-item:hover {
+            background: #111;
+        }
+
+        .conversation-item.unread .name {
+            font-weight: 700;
+        }
+
+        .conversation-item .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #222;
+        }
+
+        /* Start New Chat Button */
+        .start-chat-btn {
+            padding: 16px;
+            background: #111;
+            border-top: 1px solid #1a1a1a;
+            cursor: pointer;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .start-chat-btn:hover {
+            background: #151515;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .chat-header {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 1px solid #111;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .message {
+            max-width: 65%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 15px;
+            line-height: 1.4;
+            animation: msgPop 0.2s ease;
+        }
+
+        @keyframes msgPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .me {
+            background: #007aff;
+            align-self: flex-end;
+        }
+
+        .them {
+            background: #111;
+            align-self: flex-start;
+        }
+
+        .message-input-box {
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #111;
+        }
+
+        .message-input-box input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: #111;
+            color: #fff;
+        }
+
+        .message-input-box button {
+            background: #007aff;
+            border: none;
+            color: white;
+            padding: 0 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* USER SELECT OVERLAY */
+        #userSelectOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .user-select-window {
+            width: 420px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: #0f0f0f;
+            border: 1px solid #222;
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .user-select-item {
+            padding: 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #1a1a1a;
+            transition: background 0.2s;
+        }
+        .user-select-item:hover {
+            background: #222;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <button class="sidebar-toggle">☰</button>
-            <nav class="sidebar-nav" id="sidebarNav"></nav>
-        </aside>
-        
-        <main class="content">
-            <div class="dm-container">
-                <div class="dm-sidebar">
-                    <h2>Messages</h2>
-                    <select id="userSelect" class="user-select">
-                        <option value="">Select a user...</option>
-                    </select>
-                    <div id="conversationList" class="conversation-list"></div>
-                </div>
 
-                <div class="dm-thread">
-                    <div id="threadHeader" class="thread-header"></div>
-                    <div id="messages" class="messages-container"></div>
-                    <div class="message-input">
-                        <input type="text" id="messageText" placeholder="Type a message..." maxlength="500">
-                        <button id="sendBtn" class="btn-primary">Send</button>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <!-- Sidebar (Conversations) -->
+    <aside class="sidebar">
+        <div class="sidebar-header">Messages</div>
+
+        <div id="conversationList" class="conversation-list"></div>
+
+        <div id="startChat" class="start-chat-btn">Start New Chat</div>
+    </aside>
+
+    <!-- Chat Window -->
+    <div class="chat-panel">
+        <div id="chatHeader" class="chat-header">Select a chat</div>
+        <div id="messages" class="messages"></div>
+
+        <div class="message-input-box">
+            <input id="msgInput" type="text" placeholder="Message…" />
+            <button id="sendBtn">Send</button>
+        </div>
     </div>
 
-    <script src="js/sha256.js"></script>
-    <script src="js/firebase-api.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/dm.js"></script>
+    <!-- User Select Overlay -->
+    <div id="userSelectOverlay">
+        <div class="user-select-window">
+            <h2 style="margin-bottom: 15px;">Start a new chat</h2>
+            <div id="userSelectList"></div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="supabase-api.js"></script>
+    <script src="dm.js"></script>
+
 </body>
 </html>
