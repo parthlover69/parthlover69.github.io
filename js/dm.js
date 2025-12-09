@@ -6,7 +6,7 @@
   const localDb =
     window.db ||
     window.dmdb ||
-    new FirebaseAPI("https://parthsocial-2f4bb-default-rtdb.firebaseio.com/");
+    new FirebaseAPI("https://parthsocialhack-default-rtdb.firebaseio.com/");
 
   let currentConversation = null;
   let _loadingConversation = false;
