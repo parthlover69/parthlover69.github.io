@@ -184,37 +184,65 @@
     }
   }
 
+  // Allow sending message with Enter key
+const textEl = document.getElementById("messageText");
+if (textEl) {
+  textEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click(); // Trigger the same send logic
+    }
+  });
+}
+
+
+
   // =========================
   // SEND MESSAGE
   // =========================
-  function initSend() {
-    const btn = document.getElementById("sendBtn");
-    if (!btn) return;
-
-    btn.onclick = async () => {
-      if (!currentConvo) return alert("Select a user first");
-
-      const input = document.getElementById("messageText");
-      const txt = input.value.trim();
-      if (!txt) return;
-
+  function initSendHandler() {
+    const sendBtn = document.getElementById("sendBtn");
+    if (!sendBtn) return;
+  
+    sendBtn.onclick = null;
+  
+    // --- SEND ON ENTER KEY ---
+    const textEl = document.getElementById("messageText");
+    if (textEl) {
+      textEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+    }
+    // -------------------------
+  
+    sendBtn.addEventListener("click", async () => {
+      if (!currentConversation) return alert("Select a user first");
+  
+      const text = textEl?.value.trim();
+      if (!text) return;
+  
       try {
-        const me = localStorage.username;
-        const id = convoId(me, currentConvo);
-
-        await db.push(`/dms/${id}/messages`, {
-          sender: me,
-          text: txt,
+        const user = localStorage.getItem("username");
+        const convoId = generateConversationId(user, currentConversation);
+        const msg = {
+          sender: user,
+          text,
           createdAt: new Date().toISOString(),
-        });
-
-        input.value = "";
-        loadConvo(currentConvo);
+        };
+  
+        await localDb.push(`/dms/${convoId}/messages`, msg);
+  
+        textEl.value = "";
+        loadConversation(currentConversation);
       } catch (err) {
-        console.error("send msg error:", err);
+        console.error("send error:", err);
       }
-    };
+    });
   }
+
 
   // =========================
   // AUTO REFRESH (still 3 sec)
