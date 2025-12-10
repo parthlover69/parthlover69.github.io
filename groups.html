@@ -5,7 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Groups - parth.social</title>
     <link rel="stylesheet" href="styles.css">
+
+<style>
+/* ---------- FIGMATIZED GROUPS PAGE ---------- */
+
+/* Sidebar slide animation */
+.sidebar {
+    transform: translateX(-12px);
+    opacity: 0;
+    animation: sidebarIn 0.45s ease forwards;
+}
+@keyframes sidebarIn {
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Main fade-in */
+.content {
+    opacity: 0;
+    animation: contentFade 0.55s ease forwards 0.1s;
+}
+@keyframes contentFade {
+    to { opacity: 1; }
+}
+
+/* Container entrance */
+.groups-container {
+    transform: translateY(10px);
+    opacity: 0;
+    animation: groupsEnter 0.45s ease forwards;
+}
+@keyframes groupsEnter {
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Header */
+.groups-header h1 {
+    color: var(--accent);
+    letter-spacing: 1px;
+}
+
+/* Group cards */
+.group-item {
+    border-radius: 10px;
+    transform: translateY(6px);
+    opacity: 0;
+    animation: cardPop 0.4s ease forwards;
+}
+@keyframes cardPop {
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Hover motion */
+.group-item:hover {
+    transform: translateX(6px);
+}
+
+/* Modal styling */
+#createGroupModal .modal-content {
+    transform: scale(0.9);
+    opacity: 0;
+    animation: modalUp 0.35s ease forwards;
+}
+@keyframes modalUp {
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Inputs */
+.modal-content input,
+.modal-content select {
+    border-radius: 6px;
+    padding: 10px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: border-color 0.25s, background 0.25s;
+    margin-bottom: 12px;
+    width: 100%;
+}
+.modal-content input:focus,
+.modal-content select:focus {
+    border-color: var(--accent);
+    background: rgba(30,144,255,0.12);
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+    border-radius: 8px;
+    transition: 0.25s ease;
+}
+.btn-primary:hover,
+.btn-secondary:hover {
+    transform: translateY(-2px);
+}
+
+/* Chat area */
+.group-chat {
+    border-radius: 10px;
+}
+.messages-container {
+    padding: 18px;
+}
+.message-input input {
+    border-radius: 8px;
+}
+.message-input input:focus {
+    border-color: var(--accent);
+    background: rgba(30,144,255,0.10);
+}
+
+</style>
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -15,44 +125,48 @@
         
         <main class="content">
             <div class="groups-container">
+
                 <div class="groups-header">
-                    <h1>Groups    </h1>
+                    <h1>Groups</h1>
                     <button id="createGroupBtn" class="btn-primary">+ New Group</button>
                 </div>
 
+                <!-- CREATE GROUP MODAL -->
                 <div id="createGroupModal" class="modal hidden">
-                                <div class="modal-content">
-                                    <h2>Create Group</h2>
-                            
-                                    <input type="text" id="groupName" placeholder="group name" maxlength="50">
-                            
-                                    <!-- New: Public / Private selector -->
-                                    <label class="toggle-label">Visibility:</label>
-                                    <select id="groupPrivacy">
-                                        <option value="public">Public (anyone can join)</option>
-                                        <option value="private">Private (invite-only)</option>
-                                    </select>
-                            
-                                    <!-- New: Add members -->
-                                    <label class="toggle-label">Add Members (comma separated usernames):</label>
-                                    <input type="text" id="groupMembers" placeholder="ex: john, sarah, mike">
-                            
-                                    <button id="confirmCreateGroup" class="btn-primary">Create</button>
-                                    <button id="closeGroupModal" class="btn-secondary">Cancel</button>
-                                </div>
-                            </div>
+                    <div class="modal-content">
+                        <h2>Create Group</h2>
+
+                        <input type="text" id="groupName" placeholder="group name" maxlength="50">
+
+                        <label class="toggle-label">Visibility:</label>
+                        <select id="groupPrivacy">
+                            <option value="public">Public (anyone can join)</option>
+                            <option value="private">Private (invite-only)</option>
+                        </select>
+
+                        <label class="toggle-label">Add Members (comma separated usernames):</label>
+                        <input type="text" id="groupMembers" placeholder="ex: john, sarah, mike">
+
+                        <button id="confirmCreateGroup" class="btn-primary">Create</button>
+                        <button id="closeGroupModal" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
 
                 <div class="groups-view">
                     <div id="groupsList" class="groups-list"></div>
+
                     <div id="groupChat" class="group-chat hidden">
                         <div id="groupChatHeader" class="thread-header"></div>
+
                         <div id="groupMessages" class="messages-container"></div>
+
                         <div class="message-input">
                             <input type="text" id="groupMessageText" placeholder="Type a message..." maxlength="500">
                             <button id="sendGroupMessageBtn" class="btn-primary">Send</button>
                         </div>
                     </div>
                 </div>
+
             </div>
         </main>
     </div>
