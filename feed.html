@@ -58,15 +58,22 @@
   transform: translateY(-2px);
 }
 
-    .post-menu {
+/* ========================== */
+/* FIGMATIZED POPUP MENU      */
+/* ========================== */
+
+.post-menu {
   position: fixed;
   z-index: 9999;
-  background: rgba(0, 35, 80, 0.95); /* transparent deep blue */
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(0, 30, 70, 0.92);
+  backdrop-filter: blur(16px);
+
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
-  padding: 8px 0;
-  width: 150px;
+
+  padding: 6px 0;
+  width: 155px;
 
   display: flex;
   flex-direction: column;
@@ -75,7 +82,6 @@
   transform: translateY(-4px);
   animation: menuPop 0.18s ease forwards;
 }
-
 @keyframes menuPop {
   to {
     opacity: 1;
@@ -85,41 +91,38 @@
 
 .post-menu .menu-item {
   width: 100%;
+  padding: 10px 14px;
   text-align: left;
 
-  padding: 10px 14px;
   border: none;
   background: transparent;
 
-  color: var(--accent); /* blue blend */
+  color: var(--accent);
   font-size: 14px;
   font-weight: 500;
 
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   transition: 0.2s ease;
 }
 
 .post-menu .menu-item:hover {
-  background: rgba(30, 144, 255, 0.12); /* faint accent hover */
+  background: rgba(30,144,255,0.12);
 }
 
-/* Space icon + label cleaner */
-.post-menu .menu-item::before {
-  margin-right: 8px;
-  opacity: 0.8;
-}
-
-/* Edit icon */
+/* Icons fully CSS-injected (NO duplicates) */
 .post-menu .edit::before {
   content: "✏️";
+  opacity: 0.85;
 }
-
-/* Delete icon */
 .post-menu .delete::before {
   content: "🗑️";
+  opacity: 0.85;
 }
-    
+
 /* Posts */
 .post {
   border-radius: 12px;
@@ -138,14 +141,59 @@
   transform: scale(1.15);
 }
 
-/* Modal */
+/* ========================== */
+/* FIGMATIZED EDIT MODAL      */
+/* ========================== */
+
 .modal-content {
+  background: rgba(0, 25, 60, 0.92);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 26px;
+
+  border: 1px solid rgba(255,255,255,0.06);
+
   transform: scale(0.92);
   opacity: 0;
   animation: modalPop 0.35s ease forwards;
 }
+
 @keyframes modalPop {
   to { transform: scale(1); opacity: 1; }
+}
+
+.modal-title {
+  margin-bottom: 6px;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.modal-author {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-bottom: 14px;
+}
+
+.modal-text {
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+  resize: none;
+  transition: 0.25s ease;
+}
+.modal-text:focus {
+  border-color: var(--accent);
+  background: rgba(30,144,255,0.08);
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
 }
 
 .modal-actions button {
@@ -194,6 +242,7 @@
     <div class="modal-content">
       <button id="modalClose" class="modal-close">✖</button>
       <h2 class="modal-title">Edit Post</h2>
+
       <div class="modal-author" id="modalAuthor"></div>
 
       <textarea id="modalText" class="modal-text" maxlength="1000"></textarea>
@@ -208,12 +257,8 @@
   <!-- 3-dot menu template -->
 <template id="menuTemplate">
   <div class="post-menu">
-    <button class="menu-item edit">
-      ✏️ Edit
-    </button>
-    <button class="menu-item delete">
-      🗑️ Delete
-    </button>
+    <button class="menu-item edit"></button>
+    <button class="menu-item delete"></button>
   </div>
 </template>
 
