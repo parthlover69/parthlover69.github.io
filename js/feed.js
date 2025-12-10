@@ -13,6 +13,7 @@ let fetching = false;
 let lastFetch = 0;
 
 const me = () => localStorage.getItem("username");
+
 const escapeHTML = s =>
   (s || "").replace(/[&<>"']/g, c => ({
     "&": "&amp;",
@@ -25,18 +26,17 @@ const escapeHTML = s =>
 const avatarSrc = v =>
   !v ? null : v.startsWith("data:") ? v : `data:image/*;base64,${v}`;
 
-function q(s) { return document.querySelector(s); }
+const q = s => document.querySelector(s);
 
 // ======================
 // Auth Check
 // ======================
 function checkAuth() {
-  if (!localStorage.getItem("authToken"))
-    location.href = "index.html";
+  if (!localStorage.getItem("authToken")) location.href = "index.html";
 }
 
 // ======================
-// Modal Config
+// Modal System
 // ======================
 const modal = {
   box: q("#postModal"),
@@ -53,7 +53,9 @@ modal.close.onclick = hideModal;
 modal.save.onclick = async () => {
   if (!modal.id) return;
   const t = modal.text.value.trim();
+
   await feedDB.set(`posts/${modal.id}/content`, t);
+
   postsCache[modal.id].content = t;
   updatePost(modal.id);
   hideModal();
@@ -83,6 +85,16 @@ function hideModal() {
 }
 
 // ======================
+// Delete Post
+// ======================
+async function deletePost(id) {
+  await feedDB.set(`posts/${id}/deleted`, true);
+  postEls[id]?.box.remove();
+  delete postsCache[id];
+  delete postEls[id];
+}
+
+// ======================
 // Render Post (FIGMATIZED)
 // ======================
 const feed = q("#feedPosts");
@@ -95,7 +107,6 @@ function makePost(p, u) {
   const a = avatarSrc(u?.avatar);
   const time = p.createdAt ? new Date(p.createdAt).toLocaleString() : "";
 
-  // Beautiful Figma-style structure
   el.innerHTML = `
     <div class="post-header">
       <div class="author-block">
@@ -127,11 +138,13 @@ function makePost(p, u) {
     love: el.querySelector(".love-btn"),
     commentsBtn: el.querySelector(".comments-toggle"),
     comments: el.querySelector(".comments-section"),
-    menu: el.querySelector(".menu-btn")
+    menu: el.querySelector(".menu-btn"),
+    data: p
   };
 
   postEls[p.id] = refs;
 
+  // Event bindings
   refs.like.onclick = () => toggleReact(p.id, "likes");
   refs.love.onclick = () => toggleReact(p.id, "loves");
   refs.commentsBtn.onclick = () => toggleComments(p.id);
@@ -142,7 +155,7 @@ function makePost(p, u) {
 }
 
 // ======================
-// Update Post Display
+// Update Post UI
 // ======================
 function updatePost(id) {
   const p = postsCache[id];
@@ -163,7 +176,7 @@ function updatePost(id) {
 }
 
 // ======================
-// FIGMA-STYLE Floating Menu
+// FIGMA Floating Menu
 // ======================
 function showMenu(btn, p, u) {
   document.querySelectorAll(".post-menu").forEach(m => m.remove());
@@ -171,39 +184,42 @@ function showMenu(btn, p, u) {
   const menu = document.createElement("div");
   menu.className = "post-menu";
   menu.innerHTML = `
-    <button class="menu-item edit">✏️ Edit</button>
-    <button class="menu-item delete">🗑️ Delete</button>
+    <button class="menu-item edit"></button>
+    <button class="menu-item delete"></button>
   `;
   document.body.appendChild(menu);
 
   const rect = btn.getBoundingClientRect();
-  menu.style.left = rect.right - 160 + "px";
-  menu.style.top = rect.bottom + 8 + "px";
+  const xOffset = 5;
 
+  menu.style.left = rect.right - menu.offsetWidth + xOffset + "px";
+  menu.style.top = rect.bottom + 6 + "px";
+
+  // Only your own posts show buttons
   if (p.author !== me()) {
-    menu.querySelectorAll("button").forEach(b => (b.style.display = "none"));
-  } else {
-    menu.querySelector(".edit").onclick = () => {
-      showModal(p.id, p.content, p.author, avatarSrc(u?.avatar));
-      menu.remove();
-    };
-    menu.querySelector(".delete").onclick = () => {
-      deletePost(p.id);
-      menu.remove();
-    };
+    menu.remove();
+    return;
   }
 
-  setTimeout(
-    () =>
-      document.addEventListener(
-        "click",
-        e => {
-          if (!menu.contains(e.target) && e.target !== btn) menu.remove();
-        },
-        { once: true }
-      ),
-    20
-  );
+  menu.querySelector(".edit").onclick = () => {
+    showModal(p.id, p.content, p.author, avatarSrc(u?.avatar));
+    menu.remove();
+  };
+
+  menu.querySelector(".delete").onclick = () => {
+    deletePost(p.id);
+    menu.remove();
+  };
+
+  setTimeout(() =>
+    document.addEventListener(
+      "click",
+      e => {
+        if (!menu.contains(e.target) && e.target !== btn) menu.remove();
+      },
+      { once: true }
+    ),
+  30);
 }
 
 // ======================
@@ -233,9 +249,8 @@ async function loadFeed() {
 
       if (!postsCache[p.id]) {
         postsCache[p.id] = p;
-        const el = makePost(p, usersCache[p.author]);
 
-        // Newest at top — perfect placement
+        const el = makePost(p, usersCache[p.author]);
         feed.insertBefore(el, feed.firstChild);
       } else {
         const old = postsCache[p.id];
@@ -251,7 +266,6 @@ async function loadFeed() {
       }
     }
 
-    // Remove posts that no longer exist
     for (const id in postsCache) {
       if (!seen.has(id)) {
         postEls[id]?.box.remove();
@@ -264,7 +278,6 @@ async function loadFeed() {
     lastFetch = Date.now();
   }
 }
-
 
 // ======================
 // Reactions
@@ -300,19 +313,17 @@ async function toggleComments(id) {
   const r = postEls[id];
   if (!r) return;
 
-  if (r.comments.style.display === "none") {
-    r.comments.style.display = "block";
-    renderComments(id);
-  } else {
-    r.comments.style.display = "none";
-  }
+  const show = r.comments.style.display === "none";
+  r.comments.style.display = show ? "block" : "none";
+
+  if (show) renderComments(id);
 }
 
 async function renderComments(id) {
   const r = postEls[id];
   if (!r) return;
 
-  r.comments.innerHTML = "Loading...";
+  r.comments.innerHTML = "Loading…";
   const p = (await feedDB.get(`posts/${id}`)) || {};
   const c = p.comments || {};
   postsCache[id] = p;
@@ -360,6 +371,7 @@ function addCommentInput(id, parent) {
   w.querySelector("button").onclick = async () => {
     const t = inp.value.trim();
     if (!t) return;
+
     await addComment(id, t);
     renderComments(id);
   };
@@ -370,13 +382,13 @@ function addCommentInput(id, parent) {
 async function addComment(id, text) {
   const user = me();
   const cId = feedDB.generateId();
-  const payload = {
+
+  await feedDB.set(`posts/${id}/comments/${cId}`, {
     id: cId,
     author: user,
     text,
     createdAt: new Date().toISOString()
-  };
-  await feedDB.set(`posts/${id}/comments/${cId}`, payload);
+  });
 }
 
 async function editComment(id, cId, old) {
@@ -393,9 +405,9 @@ async function deleteComment(id, cId) {
 }
 
 // ======================
-// Create New Post (smooth & instant)
+// Create New Post
 // ======================
-(function () {
+(() => {
   const btn = q("#postBtn"),
     txt = q("#postText");
   if (!btn || !txt) return;
@@ -435,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAuth();
   loadFeed();
 
-  // Auto-refresh, but lightweight
+  // Lightweight auto-refresh
   setInterval(() => {
     if (!fetching && Date.now() - lastFetch > 3000) loadFeed();
   }, 5000);
