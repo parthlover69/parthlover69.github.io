@@ -13,6 +13,7 @@ const loginError = document.getElementById("loginError");
 
 const signupUsername = document.getElementById("signupUsername");
 const signupPassword = document.getElementById("signupPassword");
+const inviteCode = document.getElementById("inviteCode"); // Added invite code input
 const signupError = document.getElementById("signupError");
 
 // ===============================
@@ -89,13 +90,29 @@ signupForm.onsubmit = async (e) => {
 
   const u = signupUsername.value.trim();
   const p = signupPassword.value;
+  const code = inviteCode.value.trim(); // Get invite code value
   const err = signupError;
 
   err.textContent = "";
   err.classList.remove("shake");
 
-  if (!u || !p) {
+  if (!u || !p || !code) { // Check if invite code is provided
     err.textContent = "All fields required.";
+    err.classList.add("shake");
+    return;
+  }
+
+  // Validate invite code against database
+  const inviteCodeData = await db.get(`/inviteCodes/${code}`);
+  if (!inviteCodeData) {
+    err.textContent = "Invalid invite code";
+    err.classList.add("shake");
+    return;
+  }
+
+  // Check if invite code has already been used
+  if (inviteCodeData.used) {
+    err.textContent = "This invite code has already been used";
     err.classList.add("shake");
     return;
   }
@@ -106,12 +123,22 @@ signupForm.onsubmit = async (e) => {
     return;
   }
 
+  // Create the user
   await db.set(`/users/${u}`, {
     username: u,
     passwordHash: p,
     bio: "",
     avatar: "",
     createdAt: new Date().toISOString(),
+    inviteCode: code, // Store the invite code with the user
+  });
+
+  // Mark the invite code as used
+  await db.set(`/inviteCodes/${code}`, {
+    ...inviteCodeData,
+    used: true,
+    usedBy: u,
+    usedAt: new Date().toISOString()
   });
 
   startSession(u);
