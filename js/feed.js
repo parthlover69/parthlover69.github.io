@@ -28,6 +28,12 @@ const avatarSrc = v =>
 
 const q = s => document.querySelector(s);
 
+function logout() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("username");
+  window.location.href = "index.html";
+}
+
 // ======================
 // Auth Check
 // ======================
