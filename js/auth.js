@@ -104,14 +104,16 @@ signupForm.onsubmit = async (e) => {
 
   // Validate invite code against database
   const inviteCodeData = await db.get(`/inviteCodes/${code}`);
-  if (!inviteCodeData) {
+  
+  // Explicitly check if the returned value is null
+  if (inviteCodeData === null) {
     err.textContent = "Invalid invite code";
     err.classList.add("shake");
     return;
   }
 
   // Check if invite code has already been used
-  if (inviteCodeData.used) {
+  if (inviteCodeData.used === true) {
     err.textContent = "This invite code has already been used";
     err.classList.add("shake");
     return;
