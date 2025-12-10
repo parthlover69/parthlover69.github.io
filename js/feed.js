@@ -195,11 +195,14 @@ function showMenu(btn, p, u) {
   `;
   document.body.appendChild(menu);
 
-  const rect = btn.getBoundingClientRect();
-  const xOffset = 5;
+  // position after render so width/height are known
+  const btnRect = btn.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const xOffset = 8;
 
-  menu.style.left = rect.right - menu.offsetWidth + xOffset + "px";
-  menu.style.top = rect.bottom + 6 + "px";
+  // place menu so it visually hugs the button on the right side
+  menu.style.left = (btnRect.right - menuRect.width + xOffset) + "px";
+  menu.style.top = (btnRect.bottom + 6) + "px";
 
   // Only your own posts show buttons
   if (p.author !== me()) {
@@ -241,43 +244,24 @@ async function loadFeed() {
       feedDB.get("users") || {}
     ]);
 
-    usersCache = rawUsers;
+    usersCache = rawUsers || {};
 
-    const arr = Object.entries(rawPosts)
+    // build array, filter deleted, sort newest → oldest
+    const arr = Object.entries(rawPosts || {})
       .map(([id, p]) => ({ ...p, id }))
       .filter(p => !p.deleted)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-    const seen = new Set();
+    // reset DOM and caches to guarantee correct order
+    feed.innerHTML = "";
+    postsCache = {};
+    postEls = {};
 
     for (const p of arr) {
-      seen.add(p.id);
-
-      if (!postsCache[p.id]) {
-        postsCache[p.id] = p;
-
-        const el = makePost(p, usersCache[p.author]);
-        feed.insertBefore(el, feed.firstChild);
-      } else {
-        const old = postsCache[p.id];
-        if (
-          old.content !== p.content ||
-          old.likes !== p.likes ||
-          old.loves !== p.loves ||
-          old.comments !== p.comments
-        ) {
-          postsCache[p.id] = p;
-          updatePost(p.id);
-        }
-      }
-    }
-
-    for (const id in postsCache) {
-      if (!seen.has(id)) {
-        postEls[id]?.box.remove();
-        delete postEls[id];
-        delete postsCache[id];
-      }
+      postsCache[p.id] = p;
+      const el = makePost(p, usersCache[p.author]);
+      // append in sorted order (arr is DESC) → newest at top
+      feed.appendChild(el);
     }
   } finally {
     fetching = false;
@@ -440,7 +424,8 @@ async function deleteComment(id, cId) {
 
     postsCache[id] = post;
 
-    feed.insertBefore(makePost(post, usersCache[u]), feed.firstChild);
+    // put new post at the top immediately
+    feed.prepend(makePost(post, usersCache[u]));
     txt.value = "";
     btn.disabled = false;
   };
