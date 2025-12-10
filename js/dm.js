@@ -1,5 +1,5 @@
 // =========================
-// DM SYSTEM — Ultra-Optimized, All Features Preserved
+// DM SYSTEM — Ultra-Optimized + FIGMATIZED
 // =========================
 (() => {
   const db =
@@ -7,8 +7,8 @@
     window.dmdb ||
     new FirebaseAPI("https://parthsocialhack-default-rtdb.firebaseio.com/");
 
-  let currentConvo = null,
-    loading = false;
+  let currentConvo = null;
+  let loading = false;
 
   const esc = (t) =>
     t
@@ -45,10 +45,7 @@
       const container = document.getElementById("conversationList");
       if (!container) return;
 
-      const [users, dms] = await Promise.all([
-        db.get("/users"),
-        db.get("/dms"),
-      ]);
+      const [users, dms] = await Promise.all([db.get("/users"), db.get("/dms")]);
       if (!dms) return;
 
       container.innerHTML = "";
@@ -63,7 +60,6 @@
         const msgs = toArray(node.messages || node);
         if (!msgs.length) continue;
 
-        // get last message FASTEST possible
         let last = msgs[0];
         for (let i = 1; i < msgs.length; i++)
           if (msgs[i].createdAt > last.createdAt) last = msgs[i];
@@ -78,13 +74,11 @@
         });
       }
 
-      rows.sort(
-        (a, b) => (b.last.createdAt > a.last.createdAt ? 1 : -1)
-      );
+      rows.sort((a, b) => (b.last.createdAt > a.last.createdAt ? 1 : -1));
 
       for (const r of rows) {
         const el = document.createElement("div");
-        el.className = "conversation-item";
+        el.className = "conversation-item figma-slide";
         el.dataset.id = r.other;
 
         el.innerHTML = `
@@ -132,18 +126,19 @@
   // =========================
   async function loadConvo(other) {
     if (loading && currentConvo === other) return;
+
     loading = true;
+    currentConvo = other;
 
     try {
-      const me = localStorage.username;
-      currentConvo = other;
-
       unreadDot(other, false);
 
+      const me = localStorage.username;
       const id = convoId(me, other);
 
       const head = document.getElementById("threadHeader");
-      if (head) head.innerHTML = `<h2>Chat with ${esc(other)}</h2>`;
+      if (head)
+        head.innerHTML = `<h2 class="figma-fade">Chat with ${esc(other)}</h2>`;
 
       let msgs = await db.get(`/dms/${id}/messages`);
       if (!msgs) msgs = (await db.get(`/dms/${id}`))?.messages;
@@ -154,25 +149,25 @@
       box.innerHTML = "";
 
       if (msgs) {
-        const arr = toArray(msgs).sort(
-          (a, b) => (a.createdAt > b.createdAt ? 1 : -1)
+        const arr = toArray(msgs).sort((a, b) =>
+          a.createdAt > b.createdAt ? 1 : -1
         );
 
-        let html = "";
         for (const m of arr) {
-          html += `
-            <div class="message ${m.sender === me ? "sent" : "received"}">
-              ${esc(m.text)}
-              <div class="message-time">${
-                m.createdAt
-                  ? new Date(m.createdAt).toLocaleTimeString()
-                  : ""
-              }</div>
-            </div>`;
+          const el = document.createElement("div");
+          el.className = `message ${m.sender === me ? "sent" : "received"} figma-msg`;
+
+          el.innerHTML = `
+            ${esc(m.text)}
+            <div class="message-time">
+              ${m.createdAt ? new Date(m.createdAt).toLocaleTimeString() : ""}
+            </div>
+          `;
+
+          box.appendChild(el);
         }
-        box.innerHTML = html;
       } else {
-        box.innerHTML = `<div class="empty-thread">No messages yet — say hi!</div>`;
+        box.innerHTML = `<div class="empty-thread figma-fade">No messages yet — say hi!</div>`;
       }
 
       box.scrollTop = box.scrollHeight;
@@ -184,68 +179,47 @@
     }
   }
 
-  // Allow sending message with Enter key
-const textEl = document.getElementById("messageText");
-if (textEl) {
-  textEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendBtn.click(); // Trigger the same send logic
-    }
-  });
-}
-
-
-
-  // =========================
-  // SEND MESSAGE
-  // =========================
+  // ============================================
+  // FIXED SEND MESSAGE — now works 100% of time
+  // ============================================
   function initSend() {
     const sendBtn = document.getElementById("sendBtn");
-    if (!sendBtn) return;
-  
-    sendBtn.onclick = null;
-  
-    // --- SEND ON ENTER KEY ---
     const textEl = document.getElementById("messageText");
-    if (textEl) {
-      textEl.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendBtn.click();
-        }
-      });
-    }
-    // -------------------------
-  
-    sendBtn.addEventListener("click", async () => {
-      if (!currentConversation) return alert("Select a user first");
-  
-      const text = textEl?.value.trim();
-      if (!text) return;
-  
-      try {
-        const user = localStorage.getItem("username");
-        const convoId = generateConversationId(user, currentConversation);
-        const msg = {
-          sender: user,
-          text,
-          createdAt: new Date().toISOString(),
-        };
-  
-        await localDb.push(`/dms/${convoId}/messages`, msg);
-  
-        textEl.value = "";
-        loadConversation(currentConversation);
-      } catch (err) {
-        console.error("send error:", err);
+    if (!sendBtn || !textEl) return;
+
+    // Send on Enter
+    textEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
       }
+    });
+
+    // Actual send logic
+    sendBtn.addEventListener("click", async () => {
+      if (!currentConvo) return alert("Select a user first");
+
+      const text = textEl.value.trim();
+      if (!text) return;
+
+      const me = localStorage.username;
+      const id = convoId(me, currentConvo);
+
+      const msg = {
+        sender: me,
+        text,
+        createdAt: new Date().toISOString(),
+      };
+
+      await db.push(`/dms/${id}/messages`, msg);
+
+      textEl.value = "";
+      loadConvo(currentConvo);
     });
   }
 
-
   // =========================
-  // AUTO REFRESH (still 3 sec)
+  // AUTO REFRESH
   // =========================
   setInterval(() => {
     loadRecents();
