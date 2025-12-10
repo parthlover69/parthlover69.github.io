@@ -7,35 +7,91 @@
     const hasBypass = window.location.search.includes("bypass");
 
     if (isMac && !hasBypass) {
-
-        // Stop loading immediately
         if (window.stop) window.stop();
-
-        // Block all future network requests
         window.fetch = () => new Promise(() => {});
         XMLHttpRequest.prototype.open = function() { throw new Error(); };
 
-        // Try to silently close the tab
         setTimeout(() => {
-            // Trick: open blank page in same tab, then close it
             window.location.href = "about:blank";
-            setTimeout(() => {
-                window.close();
-            }, 50);
+            setTimeout(() => window.close(), 50);
         }, 10);
 
-        // Kill the rest of the execution
         throw new Error();
     }
 })();
 </script>
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>parth.social - Login</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+/* FIGMATIZED AUTH PAGE */
+.auth-box {
+    border: 1px solid var(--border-color);
+    padding: 40px;
+    background-color: var(--bg-secondary);
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+    transform: translateY(15px);
+    opacity: 0;
+    animation: authFadeIn 0.7s ease forwards;
+}
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>parth.social - Login</title>
-    <link rel="stylesheet" href="styles.css">
+@keyframes authFadeIn {
+    from { opacity: 0; transform: translateY(35px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.toggle-btn {
+    border-radius: 8px;
+}
+
+.toggle-btn.active {
+    transform: scale(1.03);
+    transition: 0.25s ease;
+}
+
+.form-group input {
+    border-radius: 8px;
+    transition: border-color 0.25s, background 0.25s;
+}
+
+.form-group input:focus {
+    border-color: var(--accent);
+    background: rgba(30,144,255,0.10);
+}
+
+.btn-primary {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.25s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.subtitle {
+    opacity: 0.7;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+/* Smooth toggle animation */
+.form {
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.25s ease, transform 0.3s ease;
+}
+
+.form.active {
+    opacity: 1;
+    transform: scale(1);
+}
+</style>
 </head>
+
 <body class="auth-page">
     <div class="auth-container">
         <div class="auth-box">
@@ -73,8 +129,31 @@
         </div>
     </div>
 
-    <script src="js/sha256.js"></script>
-    <script src="js/firebase-api.js"></script>
-    <script src="js/auth.js"></script>
+<script src="js/sha256.js"></script>
+<script src="js/firebase-api.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+// toggle animation
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+
+loginBtn.onclick = () => {
+    loginBtn.classList.add("active");
+    signupBtn.classList.remove("active");
+    loginForm.classList.add("active");
+    signupForm.classList.remove("active");
+};
+
+signupBtn.onclick = () => {
+    signupBtn.classList.add("active");
+    loginBtn.classList.remove("active");
+    signupForm.classList.add("active");
+    loginForm.classList.remove("active");
+};
+</script>
+
 </body>
 </html>
