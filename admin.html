@@ -5,6 +5,322 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Panel - parth.social</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Admin Panel Specific Styles */
+    .admin-container {
+      padding: 20px;
+      color: var(--text-primary);
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .admin-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .admin-badge {
+      background: var(--accent);
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 1px solid var(--border-color);
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-card p {
+      margin: 0;
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    
+    .admin-sections {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+    
+    .admin-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .admin-tab {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .admin-tab:hover {
+      background: var(--hover-bg);
+      transform: translateX(4px);
+    }
+    
+    .admin-tab.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+    
+    .admin-main {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border-color);
+    }
+    
+    .admin-tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .admin-tab-content.active {
+      display: block;
+    }
+    
+    .admin-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .admin-item {
+      background: var(--hover-bg);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border-color);
+    }
+    
+    .admin-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .item-title {
+      font-weight: bold;
+      color: var(--accent);
+    }
+    
+    .item-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+    
+    .btn-danger {
+      background: #ff4d4d;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #ff1a1a;
+    }
+    
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+    
+    .error-message {
+      color: #ff4d4d;
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(255, 77, 77, 0.1);
+      margin-bottom: 16px;
+    }
+    
+    .info-message {
+      color: var(--accent);
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(255, 189, 130, 0.1);
+      margin-bottom: 16px;
+    }
+    
+    .success-message {
+      color: #4dff4d;
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(77, 255, 77, 0.1);
+      margin-bottom: 16px;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+    
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 189, 130, 0.1);
+    }
+    
+    .inline-form {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--hover-bg);
+      border-radius: 8px;
+    }
+    
+    .inline-form .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    
+    .post-content {
+      margin: 12px 0;
+      padding: 12px;
+      background: var(--bg-color);
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+    }
+    
+    .post-media {
+      margin-top: 8px;
+      max-width: 300px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .post-media img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    .post-media video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -19,7 +335,13 @@
 
     <main class="content">
       <div class="admin-container hidden" id="adminContainer">
-        <h1>Admin Panel <span class="admin-badge">ADMIN</span></h1>
+        <div class="admin-header">
+          <div class="admin-title">
+            <h1>Admin Panel</h1>
+            <span class="admin-badge">ADMIN</span>
+          </div>
+          <button id="signOutAdmin" class="btn btn-danger">Sign out</button>
+        </div>
 
         <div class="admin-stats">
           <div class="stat-card">
@@ -31,128 +353,91 @@
             <p id="totalPosts">0</p>
           </div>
           <div class="stat-card">
-            <h3>Total Groups</h3>
-            <p id="totalGroups">0</p>
+            <h3>Active Invite Codes</h3>
+            <p id="activeInviteCodes">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Banned Users</h3>
+            <p id="bannedUsers">0</p>
           </div>
         </div>
 
-        <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;">
-          <div style="flex:1">
-            <input id="adminSearch" placeholder="Search users / posts / groups..." style="width:100%;padding:8px;background:#0b0b0b;border:1px solid #222;color:#fff;">
-          </div>
-          <button id="refreshBtn" class="btn-secondary">Refresh</button>
-        </div>
-
-        <div class="admin-sections" style="display:grid;grid-template-columns: 280px 1fr; gap:20px;">
+        <div class="admin-sections">
           <!-- Left nav -->
-          <div class="admin-nav" style="display:flex;flex-direction:column;gap:8px;">
-            <button class="btn-secondary admin-tab active" data-tab="feedTab">Feed Moderation</button>
-            <button class="btn-secondary admin-tab" data-tab="usersTab">Users</button>
-            <button class="btn-secondary admin-tab" data-tab="dmsTab">DMs</button>
-            <button class="btn-secondary admin-tab" data-tab="groupsTab">Groups</button>
-            <button class="btn-secondary admin-tab" data-tab="profilesTab">Profiles</button>
-            <button class="btn-secondary admin-tab" data-tab="logsTab">Activity Logs</button>
-            <button id="signOutAdmin" class="btn-danger" style="margin-top:8px;">Sign out</button>
+          <div class="admin-nav">
+            <button class="admin-tab active" data-tab="inviteCodesTab">Invite Codes</button>
+            <button class="admin-tab" data-tab="usersTab">Users</button>
+            <button class="admin-tab" data-tab="feedTab">Feed Moderation</button>
+            <button class="admin-tab" data-tab="logsTab">Activity Logs</button>
           </div>
 
           <!-- Right content -->
           <div class="admin-main">
-            <!-- FEED -->
-            <div id="feedTab" class="admin-tab-content">
-              <h2>Feed Moderation</h2>
-              <div id="postsList" style="display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto"></div>
+            <!-- INVITE CODES -->
+            <div id="inviteCodesTab" class="admin-tab-content active">
+              <h2>Invite Codes</h2>
+              
+              <div class="inline-form">
+                <div class="form-group">
+                  <label for="inviteCodeInput">Invite Code (leave blank to auto-generate)</label>
+                  <input id="inviteCodeInput" type="text" placeholder="Auto-generate">
+                </div>
+                <div class="form-group">
+                  <label for="inviteCodeNotes">Notes</label>
+                  <input id="inviteCodeNotes" type="text" placeholder="Optional notes">
+                </div>
+                <button id="createInviteCode" class="btn btn-primary">Create Code</button>
+              </div>
+              
+              <div class="admin-controls">
+                <button id="refreshInviteCodes" class="btn btn-secondary">Refresh</button>
+              </div>
+              
+              <div id="inviteCodesList" class="loading">Loading invite codes...</div>
             </div>
 
             <!-- USERS -->
-            <div id="usersTab" class="admin-tab-content hidden">
+            <div id="usersTab" class="admin-tab-content">
               <h2>Users</h2>
-              <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <button id="reloadUsers" class="btn-secondary">Reload Users</button>
-                <button id="exportUsers" class="btn-secondary">Export (JSON)</button>
+              
+              <div class="inline-form">
+                <div class="form-group">
+                  <label for="promoteUsername">Promote User to Admin</label>
+                  <input id="promoteUsername" type="text" placeholder="Username">
+                </div>
+                <button id="promoteUserBtn" class="btn btn-primary">Promote</button>
               </div>
-              <div id="usersList" style="max-height:60vh;overflow:auto"></div>
+              
+              <div class="admin-controls">
+                <button id="refreshUsers" class="btn btn-secondary">Refresh</button>
+                <button id="exportUsers" class="btn btn-secondary">Export (JSON)</button>
+              </div>
+              
+              <div id="usersList" class="loading">Loading users...</div>
             </div>
 
-            <!-- DMS -->
-            <div id="dmsTab" class="admin-tab-content hidden">
-              <h2>Direct Messages</h2>
-              <div style="display:flex;gap:12px;">
-                <div style="flex:0 0 260px;">
-                  <div class="dm-sidebar">
-                    <h2>Conversations</h2>
-                    <div id="dmConversations" class="conversation-list"></div>
-                  </div>
-                </div>
-                <div style="flex:1;">
-                  <div id="dmThread" class="dm-thread hidden">
-                    <div class="thread-header" id="dmThreadHeader"></div>
-                    <div class="messages-container" id="dmMessages"></div>
-                  </div>
-                </div>
+            <!-- FEED -->
+            <div id="feedTab" class="admin-tab-content">
+              <h2>Feed Moderation</h2>
+              <div class="admin-controls">
+                <button id="refreshFeed" class="btn btn-secondary">Refresh</button>
               </div>
-            </div>
-
-            <!-- GROUPS -->
-            <div id="groupsTab" class="admin-tab-content hidden">
-              <h2>Groups</h2>
-              <div style="display:flex;gap:12px;">
-                <div style="flex:0 0 260px;">
-                  <div class="groups-list" id="adminGroupsList"></div>
-                </div>
-                <div style="flex:1;">
-                  <div id="groupChat" class="group-chat hidden">
-                    <div class="thread-header" id="groupHeader"></div>
-                    <div class="messages-container" id="groupMessages"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PROFILES -->
-            <div id="profilesTab" class="admin-tab-content hidden">
-              <h2>Profile Management</h2>
-              <div id="profileEditor" style="max-height:60vh;overflow:auto"></div>
+              <div id="postsList" class="loading">Loading posts...</div>
             </div>
 
             <!-- LOGS -->
-            <div id="logsTab" class="admin-tab-content hidden">
+            <div id="logsTab" class="admin-tab-content">
               <h2>Activity Logs</h2>
-              <button id="clearLogsBtn" class="btn-secondary">Clear Logs</button>
-              <div id="logsList" class="logs-list"></div>
+              <div class="admin-controls">
+                <button id="refreshLogs" class="btn btn-secondary">Refresh</button>
+                <button id="clearLogs" class="btn btn-danger">Clear Logs</button>
+              </div>
+              <div id="logsList" class="loading">Loading logs...</div>
             </div>
           </div>
         </div>
       </div>
     </main>
-  </div>
-
-  <!-- Password / Setup Modal -->
-  <div id="pwModal" class="modal" aria-hidden="false">
-    <div class="modal-content">
-      <button id="pwClose" class="modal-close">✖</button>
-      <h2 class="modal-title" id="pwTitle">Admin Login</h2>
-
-      <div id="pwBody">
-        <p id="pwInstructions" style="color:#ffbd82;margin-bottom:8px;">Please enter the admin password to access the panel.</p>
-        <input id="adminPasswordInput" type="password" placeholder="Admin password">
-        <div style="height:10px"></div>
-        <button id="pwSubmit" class="btn-primary">Submit</button>
-        <div id="pwError" class="error-message" style="min-height:18px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Edit Post Modal -->
-  <div id="editPostModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-content">
-      <button id="editPostClose" class="modal-close">✖</button>
-      <h2 class="modal-title">Edit Post</h2>
-      <div id="editPostBody"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button id="savePostBtn" class="btn-primary">Save</button>
-        <button id="deletePostBtn" class="btn-danger">Delete Post</button>
-      </div>
-    </div>
   </div>
 
   <script src="js/sha256.js"></script>
