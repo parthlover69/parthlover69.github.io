@@ -9,8 +9,8 @@
 <style>
 /* ---------- FIGMATIZED DM PAGE ---------- */
 
-/* Sidebar animation */
-.sidebar {
+/* Sidebar animation - only on initial load */
+.sidebar.init-animation {
     transform: translateX(-12px);
     opacity: 0;
     animation: slideInSidebar 0.45s ease forwards;
@@ -19,8 +19,8 @@
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* Main fade */
-.content {
+/* Main fade - only on initial load */
+.content.init-animation {
     opacity: 0;
     animation: fadeInMain 0.55s ease forwards 0.1s;
 }
@@ -28,14 +28,23 @@
     to { opacity: 1; }
 }
 
-/* DM layout */
-.dm-container {
+/* DM layout - only on initial load */
+.dm-container.init-animation {
     animation: fadeUp 0.45s ease forwards;
     transform: translateY(10px);
     opacity: 0;
 }
 @keyframes fadeUp {
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* New message animation - for messages sent after initial load */
+.message.new-message {
+    animation: messageAppear 0.3s ease forwards;
+}
+@keyframes messageAppear {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Sidebar list */
@@ -145,6 +154,23 @@
     <script src="js/sha256.js"></script>
     <script src="js/firebase-api.js"></script>
     <script src="js/sidebar.js"></script>
+    <script>
+        // Add this script to handle initial animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation classes for initial load
+            document.querySelector('.sidebar').classList.add('init-animation');
+            document.querySelector('.content').classList.add('init-animation');
+            document.querySelector('.dm-container').classList.add('init-animation');
+            
+            // Set a flag to track if animations have played
+            window.animationsPlayed = false;
+            
+            // After animations complete, set the flag
+            setTimeout(function() {
+                window.animationsPlayed = true;
+            }, 1000); // Adjust timing based on your longest animation
+        });
+    </script>
     <script src="js/dm.js"></script>
 </body>
 </html>
