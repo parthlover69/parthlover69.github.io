@@ -5,21 +5,114 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Feed - parth.social</title>
   <link rel="stylesheet" href="styles.css" />
+
+  <style>
+/* ---------- FIGMATIZED FEED UI ---------- */
+
+/* Sidebar slide-in */
+.sidebar {
+  transform: translateX(-10px);
+  opacity: 0;
+  animation: slideIn 0.45s ease forwards;
+}
+@keyframes slideIn {
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Smooth content fade */
+.content {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards 0.15s;
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Compose box */
+.compose-box {
+  border-radius: 12px;
+  padding: 20px;
+  animation: floatUp 0.45s ease forwards;
+  transform: translateY(10px);
+  opacity: 0;
+}
+@keyframes floatUp {
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.compose-box textarea {
+  border-radius: 10px;
+  transition: border-color 0.25s, background 0.25s;
+}
+.compose-box textarea:focus {
+  border-color: var(--accent);
+  background: rgba(30,144,255,0.10);
+}
+
+.btn-primary {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Posts */
+.post {
+  border-radius: 12px;
+  padding: 18px;
+  animation: postAppear 0.4s ease;
+}
+@keyframes postAppear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.post .menu-btn {
+  transition: 0.25s ease;
+}
+.post .menu-btn:hover {
+  transform: scale(1.15);
+}
+
+/* Modal */
+.modal-content {
+  transform: scale(0.92);
+  opacity: 0;
+  animation: modalPop 0.35s ease forwards;
+}
+@keyframes modalPop {
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-actions button {
+  border-radius: 8px;
+  transition: 0.25s ease;
+}
+.modal-actions button:hover {
+  transform: translateY(-2px);
+}
+
+  </style>
 </head>
+
 <body>
-    <div class="app-container">
-      <aside class="sidebar">
-        <button class="sidebar-toggle">☰</button>
-        <nav class="sidebar-nav" id="sidebarNav">
-          <a href="feed.html" class="active">Feed</a>
-          <a href="dm.html">Messages</a>
-          <a href="groups.html">Groups</a>
-          <a href="profile.html">Profile</a>
-          <a href="#" onclick="logout()">Logout</a>
-        </nav>
-      </aside>
+  <div class="app-container">
+    <aside class="sidebar">
+      <button class="sidebar-toggle">☰</button>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a href="feed.html" class="active">Feed</a>
+        <a href="dm.html">Messages</a>
+        <a href="groups.html">Groups</a>
+        <a href="profile.html">Profile</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </nav>
+    </aside>
+
     <main class="content">
       <div class="feed-container">
+
         <!-- COMPOSE -->
         <div class="compose-box">
           <textarea id="postText" placeholder="what's on your mind?" maxlength="1000"></textarea>
@@ -27,31 +120,37 @@
             <button id="postBtn" class="btn-primary">Post</button>
           </div>
         </div>
+
         <!-- POSTS -->
         <div id="feedPosts" class="posts-container"></div>
       </div>
     </main>
   </div>
+
   <!-- Edit/Delete Modal -->
   <div id="postModal" class="modal hidden" aria-hidden="true">
     <div class="modal-content">
       <button id="modalClose" class="modal-close">✖</button>
       <h2 class="modal-title">Edit Post</h2>
       <div class="modal-author" id="modalAuthor"></div>
+
       <textarea id="modalText" class="modal-text" maxlength="1000"></textarea>
+
       <div class="modal-actions">
         <button id="modalSave" class="btn-primary">Save</button>
         <button id="modalDelete" class="btn-danger">Delete</button>
       </div>
     </div>
   </div>
-  <!-- 3-dot menu template (rendered per post) -->
+
+  <!-- 3-dot menu template -->
   <template id="menuTemplate">
     <div class="post-menu">
       <button class="menu-item edit">Edit</button>
       <button class="menu-item delete">Delete</button>
     </div>
   </template>
+
   <script src="js/firebase-api.js"></script>
   <script src="js/feed.js"></script>
 </body>
