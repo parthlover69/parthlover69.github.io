@@ -9,8 +9,8 @@
   <style>
 /* ---------- FIGMATIZED FEED UI ---------- */
 
-/* Sidebar slide-in */
-.sidebar {
+/* Sidebar slide-in - only on initial load */
+.sidebar.init-animation {
   transform: translateX(-10px);
   opacity: 0;
   animation: slideIn 0.45s ease forwards;
@@ -19,8 +19,8 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Smooth content fade */
-.content {
+/* Smooth content fade - only on initial load */
+.content.init-animation {
   opacity: 0;
   animation: fadeIn 0.5s ease forwards 0.15s;
 }
@@ -28,8 +28,8 @@
   to { opacity: 1; }
 }
 
-/* Compose box */
-.compose-box {
+/* Compose box - only on initial load */
+.compose-box.init-animation {
   border-radius: 12px;
   padding: 20px;
   animation: floatUp 0.45s ease forwards;
@@ -123,10 +123,12 @@
   opacity: 0.85;
 }
 
-/* Posts */
+/* Posts - only animate new posts after initial load */
 .post {
   border-radius: 12px;
   padding: 18px;
+}
+.post.new-post {
   animation: postAppear 0.4s ease;
 }
 @keyframes postAppear {
@@ -263,6 +265,23 @@
 </template>
 
   <script src="js/firebase-api.js"></script>
+  <script>
+    // Add this script before loading feed.js to set up the animation flag
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add animation classes for initial load
+      document.querySelector('.sidebar').classList.add('init-animation');
+      document.querySelector('.content').classList.add('init-animation');
+      document.querySelector('.compose-box').classList.add('init-animation');
+      
+      // Set a flag to track if animations have played
+      window.animationsPlayed = false;
+      
+      // After animations complete, set the flag
+      setTimeout(function() {
+        window.animationsPlayed = true;
+      }, 1000); // Adjust timing based on your longest animation
+    });
+  </script>
   <script src="js/feed.js"></script>
 </body>
 </html>
